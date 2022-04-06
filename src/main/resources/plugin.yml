@@ -1,0 +1,7 @@
+name: ThePit
+version: '${project.version}'
+main: io.github.reconsolidated.thepit.ThePit
+api-version: 1.18
+commands:
+  pit:
+    description: Teleports you to The Pit
