@@ -1,5 +1,7 @@
 package io.github.reconsolidated.thepit;
 
+import io.github.reconsolidated.thepit.Pickups.ArmorStandsCleaner;
+import io.github.reconsolidated.thepit.Pickups.PickupsManager;
 import io.github.reconsolidated.thepit.PitUtilListeners.KillingSpree;
 import io.github.reconsolidated.thepit.PitUtilListeners.RemoveFallDamage;
 import io.github.reconsolidated.thepit.PitUtilListeners.SlimeJumps;
@@ -35,6 +37,14 @@ public final class ThePit extends JavaPlugin {
         new KillingSpree();
         new PitCommand();
         new SlimeJumps();
+
+
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            new PickupsManager();
+            new ArmorStandsCleaner(world);
+
+            PickupsManager.getInstance().setup();
+        }, 200L);
     }
 
     @Override
