@@ -1,6 +1,7 @@
 package io.github.reconsolidated.thepit.Pickups;
 
 import io.github.reconsolidated.thepit.ThePit;
+import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
@@ -15,18 +16,12 @@ public class ArmorStandsCleaner implements Listener {
 
     public ArmorStandsCleaner(World world) {
         this.world = world;
+        Bukkit.getScheduler().runTaskTimer(ThePit.plugin, this::clean, 100L, 20 * 60 * 5L);
     }
 
-    @EventHandler
-    public void onWorldLoad(WorldLoadEvent event) {
-        if (event.getWorld() == world) {
-            clean();
-        }
-    }
 
     private boolean destroyIfArmorStandAndMarked(Entity e) {
-        if (e instanceof ArmorStand) {
-            ArmorStand as = (ArmorStand) e;
+        if (e instanceof ArmorStand as) {
             if (isMarkedForCleaning(as) && !PickupsManager.getInstance().isAPickup(as)) {
                 as.remove();
                 return true;

@@ -15,12 +15,18 @@ public class SlimeJumps implements Listener {
 
     @EventHandler
     public void onStepOnSlime(PlayerMoveEvent event) {
-        if (!event.getPlayer().getWorld().getName().equals(ThePit.plugin.getWorld().getName())) return;
+
+        int multiplier = 4;
 
         World world = event.getPlayer().getWorld();
+
+        if (world.getName().equalsIgnoreCase("world")) {
+            multiplier = 2;
+        }
+
         if (world.getBlockAt(event.getPlayer().getLocation().clone().add(0, -1, 0)).getType().equals(Material.SLIME_BLOCK)) {
             Vector direction = event.getPlayer().getLocation().getDirection().normalize();
-            event.getPlayer().setVelocity(direction.multiply(13).setY(1.3));
+            event.getPlayer().setVelocity(direction.multiply(multiplier).setY(1.1));
         }
 
     }
