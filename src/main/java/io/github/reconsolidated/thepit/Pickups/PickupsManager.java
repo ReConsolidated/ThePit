@@ -11,6 +11,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
@@ -36,20 +37,23 @@ public class PickupsManager implements Listener {
     }
 
     @EventHandler
-    public void onInteract(PlayerArmorStandManipulateEvent event) {
-        Bukkit.getLogger().info("Right click as");
-        ArmorStand as = event.getRightClicked();
-        Optional<Pickup> pickupOptional = getPickup(as);
-        pickupOptional.ifPresent(pickup -> {
-            Bukkit.getLogger().info("its a pickup");
+    public void onInteract(PlayerInteractAtEntityEvent event) {
+        if (event.getRightClicked() instanceof ArmorStand as) {
+            Optional<Pickup> pickupOptional = getPickup(as);
+            pickupOptional.ifPresent(pickup -> {
+                event.setCancelled(true);
+                if (pickup.isPickable()) {
+                    pickup.onPickup(event.getPlayer());
+                    Bukkit.getScheduler().runTaskLater(ThePit.plugin, () -> {
+                        PickupType type = getRandomPickupType();
+                        pickup.spawn(type);
+                    }, pickup.getRefreshTime());
+                }
 
-            pickup.onPickup(event.getPlayer());
-            Bukkit.getScheduler().runTaskLater(ThePit.plugin, () -> {
-                PickupType type = getRandomPickupType();
-                pickup.spawn(type.getItem(), type.getCommand());
-            }, pickup.getRefreshTime());
 
-        });
+            });
+        }
+
 
     }
 
@@ -60,7 +64,9 @@ public class PickupsManager implements Listener {
 
     private Optional<Pickup> getPickup(ArmorStand as) {
         for (Pickup pickup : pickupList) {
-            if (pickup != null && pickup.getArmorStand().getUniqueId().equals(as.getUniqueId())) {
+            if (pickup != null && (pickup.getArmorStand().getUniqueId().equals(as.getUniqueId()) ||
+                    (pickup.getArmorStand().getWorld().equals(as.getWorld())
+                            && pickup.getArmorStand().getLocation().distanceSquared(as.getLocation()) < 1)) ) {
                 return Optional.of(pickup);
             }
         }
@@ -71,16 +77,24 @@ public class PickupsManager implements Listener {
     public boolean isAPickup(ArmorStand as) {
         for (Pickup pickup : pickupList) {
             if (pickup.getArmorStand().getUniqueId().equals(as.getUniqueId())) return true;
+            if (pickup.getFirstLineAs().getUniqueId().equals(as.getUniqueId())) return true;
         }
         return false;
     }
 
     public void setup() {
+        pickupList = (List<Pickup>) ThePit.plugin.getConfig().getList("pickups", new ArrayList<>());
+
+        if (pickupList.isEmpty()) {
+            pickupList.add(new Pickup(new Location(Bukkit.getWorlds().get(0), 0, 100, 0), 20000));
+            savePickupList();
+        }
+
         load();
 
         for (Pickup pickup : pickupList) {
             PickupType type = getRandomPickupType();
-            pickup.spawn(type.getItem(), type.getCommand());
+            pickup.spawn(type);
         }
     }
 
@@ -97,23 +111,16 @@ public class PickupsManager implements Listener {
     public void addPickup(Location location) {
         Pickup pickup = new Pickup(location.clone(), 10000);
         PickupType type = getRandomPickupType();
-        pickup.spawn(type.getItem(), type.getCommand());
+        pickup.spawn(type);
         pickupList.add(pickup);
         savePickupList();
     }
 
     public void load() {
-        pickupList = (List<Pickup>) ThePit.plugin.getConfig().getList("pickups", new ArrayList<>());
-
-        if (pickupList.isEmpty()) {
-            pickupList.add(new Pickup(new Location(Bukkit.getWorlds().get(0), 0, 100, 0), 20000));
-            savePickupList();
-        }
-
         pickupTypes = (List<PickupType>) ThePit.plugin.getConfig().getList("pickup_types", new ArrayList<>());
 
         if (pickupTypes.isEmpty()) {
-            pickupTypes.add(new PickupType("say Hello", new ItemStack(Material.BEDROCK)));
+            pickupTypes.add(new PickupType("say Hello", new ItemStack(Material.BEDROCK), "Efekt Testowy"));
 
             savePickupTypesList();
         }

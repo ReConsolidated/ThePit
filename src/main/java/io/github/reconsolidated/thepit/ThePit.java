@@ -52,13 +52,8 @@ public final class ThePit extends JavaPlugin {
         new PitCommand();
         new SlimeJumps();
         new PickupsManager();
-
-
-        Bukkit.getScheduler().runTaskLater(this, () -> {
-            new ArmorStandsCleaner(world);
-
-            PickupsManager.getInstance().setup();
-        }, 200L);
+        new ArmorStandsCleaner(world);
+        PickupsManager.getInstance().setup();
     }
 
     @Override
